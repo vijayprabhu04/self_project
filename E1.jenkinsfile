@@ -1,0 +1,103 @@
+pipeline {
+	agent any
+		stages {
+			stage("Generic Inputs") {
+				input {
+					message "Select your environment to create infrastructure"
+					parameters {
+						booleanParam(defaultValue: 'false', description: 'Production', name: 'prod')
+						booleanParam(defaultValue: 'false', description: 'Staging', name: 'staging')
+						booleanParam(defaultValue: 'false', description: 'Dev', name: 'dev')
+						}
+					}
+				steps {
+					script {	
+						env_prod = "${prod}"
+						env_stage = "${staging}"
+						env_dev = "${dev}"
+						}
+					}
+				}
+
+			stage("Production") {
+				steps {
+					script {
+						if (env_prod == 'true') {
+						def count
+						def tag
+						def userInput = input(
+                            id: 'userInput', message: 'Provide below details..',
+                            parameters: [
+									string(defaultValue: '1',
+                                            description: 'How many machines to be provisioned?',
+                                            name: 'count'),
+									string(defaultValue: 'prod-',
+                                            description: 'Set tags for your instances [sample i/p prod-httpd]',
+                                            name: 'tag'), ])
+										inputcount = userInput.count?:''
+										inputtag = userInput.tag?:''
+										sh '''
+										ssh root@automation "cd /data/self-workspace/terraform-files/E1_multi_env_dynamic; terraform plan -var "mycount='''+inputcount+'''" -var "instance_tag='''+inputtag+'''" -var "vpc=vpc-f9cf2e92""
+										'''
+										}
+									}
+								}
+							}
+
+			stage("Staging") {
+				steps {
+					script {
+						if (env_stage == 'true') {
+						def count
+						def tag
+						def userInput = input(
+                            id: 'userInput', message: 'Provide below details..',
+                            parameters: [
+									string(defaultValue: '1',
+                                            description: 'How many machines to be provisioned?',
+                                            name: 'count'),
+									string(defaultValue: 'stage-',
+                                            description: 'Set tags for your instances [sample i/p stage-httpd]',
+                                            name: 'tag'), ])
+										inputcount = userInput.count?:''
+										inputtag = userInput.tag?:''
+										sh '''
+										ssh root@automation "cd /data/self-workspace/terraform-files/E1_multi_env_dynamic; terraform plan -var "mycount='''+inputcount+'''" -var "instance_tag='''+inputtag+'''" -var "vpc=vpc-0b730aede943b8c1a""
+										'''
+										}
+									}
+								}
+							}
+
+			stage("Dev") {
+				steps {
+					script {
+						if (env_dev == 'true') {
+						def count
+						def tag
+						def userInput = input(
+                            id: 'userInput', message: 'Provide below details..',
+                            parameters: [
+									string(defaultValue: '1',
+                                            description: 'How many machines to be provisioned?',
+                                            name: 'count'),
+									string(defaultValue: 'dev-',
+                                            description: 'Set tags for your instances [sample i/p prod-httpd]',
+                                            name: 'tag'), ])
+										inputcount = userInput.count?:''
+										inputtag = userInput.tag?:''
+										sh '''
+										ssh root@automation "cd /data/self-workspace/terraform-files/E1_multi_env_dynamic; terraform plan -var "mycount='''+inputcount+'''" -var "instance_tag='''+inputtag+'''" -var "vpc=vpc-016c731e7d14e28b7""
+										'''
+										}
+									}
+								}
+							}
+						}
+					}
+						
+					
+						
+				
+
+			

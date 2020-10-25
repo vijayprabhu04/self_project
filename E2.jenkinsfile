@@ -1,0 +1,112 @@
+pipeline {
+	agent any
+		stages {
+			stage("Generic Inputs") {
+				input {
+					message "Select your environment to create infrastructure"
+					parameters {
+						booleanParam(defaultValue: 'false', description: 'Production', name: 'prod')
+						booleanParam(defaultValue: 'false', description: 'Staging', name: 'staging')
+						booleanParam(defaultValue: 'false', description: 'Dev', name: 'dev')
+						}
+					}
+				steps {
+					script {	
+						env_prod = "${prod}"
+						env_stage = "${staging}"
+						env_dev = "${dev}"
+						}
+					}
+				}
+
+			stage("Production") {
+				steps {
+					script {
+						if (env_prod == 'true') {
+						sh '''
+						echo "Remove old file"
+						ssh root@automation "rm -rf /data/self-workspace/terraform-files/E2_fetch_details/vpc.txt"
+						ssh root@automation "rm -rf /data/self-workspace/terraform-files/E2_fetch_details/sg.txt"
+						echo "Fetch VPC details"
+						ssh root@automation "cd /data/self-workspace/terraform-files/E2_fetch_details; terraform apply -auto-approve -var env=prod"
+						echo "copy vpc & SG details to a file"
+                        ssh root@automation "cd /data/self-workspace/terraform-files/E2_fetch_details; terraform output vpc_id  >> vpc.txt"
+						ssh root@automation "cd /data/self-workspace/terraform-files/E2_fetch_details; terraform output sg_id  >> sg.txt"
+						echo "Modify the output file"
+						ssh root@automation "cd /data/self-workspace/terraform-files/E2_fetch_details; ./text_process.sh vpc.txt"
+						ssh root@automation "cd /data/self-workspace/terraform-files/E2_fetch_details; ./text_process.sh sg.txt"
+						'''
+						vpc_id = readFile '/data/self-workspace/terraform-files/E2_fetch_details/vpc.txt'
+						sg_id = readFile '/data/self-workspace/terraform-files/E2_fetch_details/sg.txt'
+						env_vpc = input id: 'userInput', message: 'Select your vpc', parameters: [choice(choices: "${vpc_id}", description: 'Find your production VPCs', name: 'prod_vpc')]
+						env_sg = input id: 'userInput', message: 'Select your security group', parameters: [choice(choices: "${sg_id}", description: 'Find your production SGs', name: 'prod_sg')]
+						sh '''
+						ssh root@automation "cd /data/self-workspace/terraform-files/E3_multi_env_all; terraform plan -var "instance_tag=prod-server" -var "vpc='''+env_vpc+'''" -var "SG='''+env_sg+'''""
+						'''
+						}
+					}
+				}
+			}
+
+			stage("Staging") {
+				steps {
+					script {
+						if (env_stage == 'true') {
+						sh '''
+						echo "Remove old file"
+						ssh root@automation "rm -rf /data/self-workspace/terraform-files/E2_fetch_details/vpc.txt"
+						ssh root@automation "rm -rf /data/self-workspace/terraform-files/E2_fetch_details/sg.txt"
+						echo "Fetch VPC details"
+						ssh root@automation "cd /data/self-workspace/terraform-files/E2_fetch_details; terraform apply -auto-approve -var env=staging"
+						echo "copy vpc & SG details to a file"
+                        ssh root@automation "cd /data/self-workspace/terraform-files/E2_fetch_details; terraform output vpc_id  >> vpc.txt"
+						ssh root@automation "cd /data/self-workspace/terraform-files/E2_fetch_details; terraform output sg_id  >> sg.txt"
+						echo "Modify the output file"
+						ssh root@automation "cd /data/self-workspace/terraform-files/E2_fetch_details; ./text_process.sh vpc.txt"
+						ssh root@automation "cd /data/self-workspace/terraform-files/E2_fetch_details; ./text_process.sh sg.txt"
+						'''
+						vpc_id = readFile '/data/self-workspace/terraform-files/E2_fetch_details/vpc.txt'
+						sg_id = readFile '/data/self-workspace/terraform-files/E2_fetch_details/sg.txt'
+						env_vpc = input id: 'userInput', message: 'Select your vpc', parameters: [choice(choices: "${vpc_id}", description: 'Find your production VPCs', name: 'prod_vpc')]
+						env_sg = input id: 'userInput', message: 'Select your security group', parameters: [choice(choices: "${sg_id}", description: 'Find your production SGs', name: 'prod_sg')]
+						sh '''
+						ssh root@automation "cd /data/self-workspace/terraform-files/E3_multi_env_all; terraform plan -var "instance_tag=staging-server" -var "vpc='''+env_vpc+'''" -var "SG='''+env_sg+'''""
+						'''
+						}
+					}
+				}
+			}
+
+			stage("Dev") {
+				steps {
+					script {
+						if (env_dev == 'true') {
+						sh '''
+						echo "Remove old file"
+						ssh root@automation "rm -rf /data/self-workspace/terraform-files/E2_fetch_details/vpc.txt"
+						ssh root@automation "rm -rf /data/self-workspace/terraform-files/E2_fetch_details/sg.txt"
+						echo "Fetch VPC details"
+						ssh root@automation "cd /data/self-workspace/terraform-files/E2_fetch_details; terraform apply -auto-approve -var env=dev"
+						echo "copy vpc & SG details to a file"
+                        ssh root@automation "cd /data/self-workspace/terraform-files/E2_fetch_details; terraform output vpc_id  >> vpc.txt"
+						ssh root@automation "cd /data/self-workspace/terraform-files/E2_fetch_details; terraform output sg_id  >> sg.txt"
+						echo "Modify the output file"
+						ssh root@automation "cd /data/self-workspace/terraform-files/E2_fetch_details; ./text_process.sh vpc.txt"
+						ssh root@automation "cd /data/self-workspace/terraform-files/E2_fetch_details; ./text_process.sh sg.txt"
+						'''
+						vpc_id = readFile '/data/self-workspace/terraform-files/E2_fetch_details/vpc.txt'
+						sg_id = readFile '/data/self-workspace/terraform-files/E2_fetch_details/sg.txt'
+						env_vpc = input id: 'userInput', message: 'Select your vpc', parameters: [choice(choices: "${vpc_id}", description: 'Find your production VPCs', name: 'prod_vpc')]
+						env_sg = input id: 'userInput', message: 'Select your security group', parameters: [choice(choices: "${sg_id}", description: 'Find your production SGs', name: 'prod_sg')]
+						sh '''
+						ssh root@automation "cd /data/self-workspace/terraform-files/E3_multi_env_all; terraform plan -var "instance_tag=dev-server" -var "vpc='''+env_vpc+'''" -var "SG='''+env_sg+'''""
+						'''
+						}
+					}
+				}
+			}
+		}
+	}
+		
+	
+				
