@@ -7,7 +7,6 @@ pipeline {
 				}
 				steps {
 					script {
-						if (env_prod == 'true') {
 						sh '''
 						ssh root@automation "cd /data/self-workspace/terraform-files/E0_multi_env; terraform plan -var-file="production.tfvars""
 						'''
@@ -16,4 +15,3 @@ pipeline {
 				}
 			}
 		}
-	}
