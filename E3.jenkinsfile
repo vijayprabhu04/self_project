@@ -2,10 +2,7 @@ pipeline {
 	agent any
 		stages {
 			stage("Production") {
-				agent any
-				when { 
-					branch "master"
-				}
+				if (env.BRANCH_NAME == 'master') {
 				steps {
 					script {
 						sh '''
@@ -16,3 +13,4 @@ pipeline {
 				}
 			}
 		}
+	}
