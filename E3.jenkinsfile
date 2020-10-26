@@ -2,7 +2,11 @@ pipeline {
 	agent any
 		stages {
 			stage("Production") {
-				when { expression { branch "master" } }
+				when { 
+					expression { 
+						branch "master" 
+						} 
+					}
 				steps {
 					script {
 						sh '''
