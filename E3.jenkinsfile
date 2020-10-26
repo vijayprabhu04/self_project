@@ -2,8 +2,9 @@ pipeline {
 	agent any
 		stages {
 			stage("Production") {
+				agent any
 				when { 
-					branch 'master'
+					branch "master"
 				}
 				steps {
 					script {
